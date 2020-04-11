@@ -102,18 +102,21 @@
         $(function () {
             // 一.一进入文章类别管理页面 显示存在数据库中的所有文章类别
             // 1.发送ajax请求拿到返回的每一行数据
-            $.ajax({
-                type: 'get',
-                url: BigNew.category_list,
-                success: function (backData) {
-                    // console.log(backData);
-                    //2. 返回成功,利用模板引擎显示在页面上
-                    if (backData.code == 200) {
-                        let resHtml = template('category_temp', backData)
-                        $('tbody').html(resHtml)
+            function getData() {
+                $.ajax({
+                    type: 'get',
+                    url: BigNew.category_list,
+                    success: function (backData) {
+                        // console.log(backData);
+                        //2. 返回成功,利用模板引擎显示在页面上
+                        if (backData.code == 200) {
+                            let resHtml = template('category_temp', backData)
+                            $('tbody').html(resHtml)
+                        }
                     }
-                }
-            })
+                })
+            }
+            getData()
 
             // 二.判断是 编辑还是 新增 点击出现的模态框
             //show.bs.modal 这个事件是在模态框显示时的立即触发的
@@ -135,6 +138,43 @@
 
                 }
             })
+
+            // 三.给模态框中的 新增/编辑 按钮设置点击事件
+            $('#addOrEdit').on('click', function () {
+                if ($(this).hasClass('btn-primary')) {
+                    //是新增按钮点击的
+
+                    // 拿到用户输入的分类名称跟分类别名
+                    let category_name = $('#recipient-name').val().trim()
+                    let category_slug = $('#message-text').val().trim()
+                    $.ajax({
+                        type: 'post',
+                        url: BigNew.category_add,
+                        data: {
+                            name: category_name,
+                            slug: category_slug
+                        },
+                        success: function (backData) {
+                            // console.log(backData);
+                            if (backData.code == 201) {
+                                alert('新增成功');
+                                //  重新获取数据库中所有的数据显示在页面上
+                                getData();
+                                //隐藏模态框
+                                $('#myModal').modal('hide');
+                                // 清空输入框的内容
+                                $('#recipient-name').val('')
+                                $('#message-text').val('')
+                            }
+
+                        }
+                    })
+
+                } else {
+                    //是编辑按钮点击的
+                }
+            })
+
 
         })
     </script>
