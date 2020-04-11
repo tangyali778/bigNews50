@@ -53,6 +53,8 @@
         </div>
     </div>
     <!-- 模态框 -->
+    <!-- 隐藏域 -->
+    <input type="hidden" name="" id="categoryId">
     <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -136,6 +138,27 @@
                     // 如果是编辑按钮,则这个按钮是绿色的要把蓝色的类名删掉
                     $('#addOrEdit').text('编辑').addClass('btn-success').removeClass('btn-primary')
 
+                    // 四.编辑第一步
+                    //把点击编辑对应的那行 的分类名称跟分类别名 显示在模态框中
+                    // 1.拿到点击的那行的id
+                    let id = $(e.relatedTarget).data('id');
+                    // 发送ajax请求得到对应的的分类名称跟分类别名 
+                    $.ajax({
+                        type: 'get',
+                        url: BigNew.category_search,
+                        data: {
+                            id: id
+                        },
+                        dataType: 'json',
+                        success: function (backData) {
+                            console.log(backData);
+                            // 表示拿到了点击那行的 分类名称跟分类别名
+                            $('#recipient-name').val(backData.data[0].name);
+                            $('#message-text').val(backData.data[0].slug);
+                            $('#categoryId').val(backData.data[0].id);
+                        }
+                    })
+
                 }
             })
 
@@ -147,6 +170,11 @@
                     // 拿到用户输入的分类名称跟分类别名
                     let category_name = $('#recipient-name').val().trim()
                     let category_slug = $('#message-text').val().trim()
+                    if (!category_name || !category_slug) {
+                        alert('请输入分类名称跟分类别名');
+                        return;
+                    }
+                    //    发送ajax请求,新增文章类名
                     $.ajax({
                         type: 'post',
                         url: BigNew.category_add,
@@ -172,6 +200,32 @@
 
                 } else {
                     //是编辑按钮点击的
+
+                    // 四.编辑第二步
+                    //   1.获取要编辑的分类名称跟分类别名
+                    let category_id = $('#categoryId').val().trim();
+                    let category_name = $('#recipient-name').val().trim();
+                    let category_slug = $('#message-text').val().trim();
+                    // 2.发送ajax请求完成编辑修改操作
+                    $.ajax({
+                        type: 'post',
+                        url: BigNew.category_edit,
+                        data: {
+                            name: category_name,
+                            slug: category_slug,
+                            id: category_id
+                        },
+                        success: function (backData) {
+                            console.log(backData);
+                            if (backData.code == 200) {
+                                alert('修改成功')
+                                // 3.编辑成功后重新加载数据
+                                getData();
+                                // 隐藏模态框
+                                $('#myModal').modal('hide')
+                            }
+                        }
+                    })
                 }
             })
 
