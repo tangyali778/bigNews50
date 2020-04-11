@@ -43,6 +43,7 @@
                 <tfoot>
                     <tr>
                         <td colspan="3" class="text-center">
+                            <!-- bootstrap中模态框用法有data-toggle="modal" data-target ="#myModal"这两个属性可以点击这个a链接的时候出现模态框,不需要通过点击事件用js控制出来 -->
                             <a href="javascript:void(0)" class="btn btn-success" id="xinzengfenlei" data-toggle="modal"
                                 data-target="#myModal">新增分类</a>
                         </td>
@@ -63,18 +64,18 @@
                 <div class="modal-body">
                     <form>
                         <div class="form-group">
-                            <label for="recipient-name" class="control-label">Recipient:</label>
+                            <label for="recipient-name" class="control-label">分类名称:</label>
                             <input type="text" class="form-control" id="recipient-name">
                         </div>
                         <div class="form-group">
-                            <label for="message-text" class="control-label">Message:</label>
-                            <textarea class="form-control" id="message-text"></textarea>
+                            <label for="message-text" class="control-label">分类别名:</label>
+                            <input class="form-control" id="message-text"></input>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary">Send message</button>
+                    <button type="button" id="addOrEdit" class="btn btn-primary">Send message</button>
                 </div>
             </div>
         </div>
@@ -114,6 +115,26 @@
                 }
             })
 
+            // 二.判断是 编辑还是 新增 点击出现的模态框
+            //show.bs.modal 这个事件是在模态框显示时的立即触发的
+            // 如果是通过点击某个作为触发器的元素,则此元素可以通过事件的relatedTarget属性进行访问
+            $('#myModal').on('show.bs.modal', function (e) {
+                //console.log(e.relatedTarget);//通过这个可以知道是谁点击模态框弹出的
+
+                if (e.relatedTarget === $('#xinzengfenlei')[0]) {
+                    //新增按钮点击出现的
+                    $('#myModalLabel').text('新增分类');
+                    // 如果是新增按钮,则这个按钮是蓝色的要把绿色的类名删掉
+                    $('#addOrEdit').text('新增').addClass('btn-primary').removeClass('btn-success')
+
+                } else {
+                    //编辑按钮点击出现的
+                    $('#myModalLabel').text('编辑分类')
+                    // 如果是编辑按钮,则这个按钮是绿色的要把蓝色的类名删掉
+                    $('#addOrEdit').text('编辑').addClass('btn-success').removeClass('btn-primary')
+
+                }
+            })
 
         })
     </script>
