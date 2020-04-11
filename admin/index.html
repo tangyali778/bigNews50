@@ -108,7 +108,7 @@
                 //     'Authorization': localStorage.getItem('token')
                 // },
                 success: function (backData) {
-                    console.log(backData);
+                    // console.log(backData);
                     if (backData.code == 200) {
                         // 个人信息显示在页面上
                         $('.user_info>span>i').text(backData.data.nickname)

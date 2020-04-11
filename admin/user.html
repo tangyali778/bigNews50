@@ -44,7 +44,9 @@
                     <label for="inputPassword3" class="col-sm-2 control-label">用户图标：</label>
                     <div class="col-sm-10">
                         <img src="images/2.jpg" alt="" class="user_pic">
-                        <input style="display: block" name="userPic" type="file" id="exampleInputFile">
+                        <!-- 实际开发的时候,这个选择文件的这个input基本不用太丑了,会把他隐藏 -->
+                        <!-- ui会设计一个图片,放在label里面的,那么点击这个图片就等于点击这个选择文件的input -->
+                        <input style="display: none" name="userPic" type="file" id="exampleInputFile">
                         <!-- 给label标签的for属性赋值,值是input标签的id,那这样的话点击label就相当于点击了input -->
                         <br>
                         <label for="exampleInputFile">
@@ -68,6 +70,87 @@
             </form>
         </div>
     </div>
+    <script src="./libs/http.js"></script>
+    <script>
+        //入口函数
+        $(function () {
+            // 一.进入页面就要发送ajax请求,获取到所有的ajax请求,显示在对应的标签中
+            $.ajax({
+                type: 'get',
+                url: BigNew.user_detail,
+                success: function (backData) {
+                    console.log(backData);
+                    if (backData.code == 200) {
+                        // 个人信息显示在对应的标签上
+                        // $('.username').val(backData.data.username);
+                        // $('.nickname').val(backData.data.nickname);
+                        // $('.email').val(backData.data.email);
+                        // $('.password').val(backData.data.password);
+                        // 上面这四句代码可以用forin遍历对象键值对代替比较简单
+                        for (let key in backData.data) {
+                            $('.' + key).val(backData.data[key])
+                        }
+                        $('.user_pic').attr('src', backData.data.userPic);
+                    }
+                }
+            })
+
+            // 二.预览头像
+            // 1.给选中图像的input标签设置值改变事件
+            $('#exampleInputFile').on('change', function () {
+                // 2.获取选中的头像
+                let file1 = this.files[0];
+                // 3.给这个选中的头像设置一个路径
+                let url = URL.createObjectURL(file1)
+                // 4.把这个url赋值给img的src属性
+                $('.user_pic').attr('src', url)
+            })
+
+
+            // 三,个人中心编辑第二步
+            // 1.给修改按钮设置点击事件
+            $('.btn-edit').on('click', function (e) {
+                e.preventDefault();//取消submit默认提交事件
+                // 2.获取所有修改后的表单中的信息, FormData获取数据
+                let fd = new FormData(document.querySelector('form'));
+                // 检查form表单中,需要获取数据的标签是否有name属性且name属性的值是否跟接口要传递的参数一致
+                // 3.发送ajax请求
+                $.ajax({
+                    type: 'post',
+                    url: BigNew.user_edit,
+                    data: fd,
+                    contentType: false,//不要设置请求头
+                    processData: false,//不要把传递的fd的值变成key=value这种格式的字符串
+                    success: function (backData) {
+                        if (backData.code == 200) {
+                            alert('修改成功');
+
+                            // 完成修改之久,主页也要更新新的内容
+                            // 第一种,直接更新内容,这种会刷新页面
+                            // parent.location.reload();
+
+                            // 第二种:发送ajax请求,获取到个人信息找到父页面上的标签,内容显示到对应的标签上
+                            $.ajax({
+                                type: 'get',
+                                url: BigNew.user_info,
+                                success: function (backData) {
+                                    // console.log(backData);
+                                    if (backData.code == 200) {
+                                        // 个人信息显示在页面上
+                                        $('.user_info>span>i').text(backData.data.nickname)
+                                        $('.user_info>img').attr('src', backData.data.userPic)
+                                        $('.user_center_link>img').attr('src', backData.data.userPic)
+                                    }
+                                }
+                            })
+                        }
+                    }
+                })
+            })
+
+
+        })
+    </script>
 </body>
 
 </html>
