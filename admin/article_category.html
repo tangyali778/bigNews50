@@ -53,8 +53,8 @@
         </div>
     </div>
     <!-- 模态框 -->
-    <!-- 隐藏域 -->
-    <input type="hidden" name="" id="categoryId">
+    
+   
     <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -65,13 +65,15 @@
                 </div>
                 <div class="modal-body">
                     <form>
+                        <!-- 隐藏域 -->
+                        <input type="hidden" name="id" id="categoryId">
                         <div class="form-group">
                             <label for="recipient-name" class="control-label">分类名称:</label>
-                            <input type="text" class="form-control" id="recipient-name">
+                            <input type="text" class="form-control" name="name" id="recipient-name">
                         </div>
                         <div class="form-group">
                             <label for="message-text" class="control-label">分类别名:</label>
-                            <input class="form-control" id="message-text"></input>
+                            <input class="form-control" name="slug" id="message-text"></input>
                         </div>
                     </form>
                 </div>
@@ -151,7 +153,7 @@
                         },
                         dataType: 'json',
                         success: function (backData) {
-                            console.log(backData);
+                            // console.log(backData);
                             // 表示拿到了点击那行的 分类名称跟分类别名
                             $('#recipient-name').val(backData.data[0].name);
                             $('#message-text').val(backData.data[0].slug);
@@ -203,20 +205,30 @@
 
                     // 四.编辑第二步
                     //   1.获取要编辑的分类名称跟分类别名
-                    let category_id = $('#categoryId').val().trim();
-                    let category_name = $('#recipient-name').val().trim();
-                    let category_slug = $('#message-text').val().trim();
+                    // let category_id = $('#categoryId').val().trim();
+                    // let category_name = $('#recipient-name').val().trim();
+                    // let category_slug = $('#message-text').val().trim();
+                    // 上面这三句话是获取form中的数据
+                    // 如果是三十句话按照这种写法就很累人,首先我们想到了formdata,但是用formdata要后端支持才行
+                    // 但是我们这个文章类别编辑的接口,后端并没有告诉我们可以使用formdata
+                    // 好的是:jquery给我们提供了一个serialize()方法
+                    // 这个方法也是可以一次性的获取form表单中带有name属性的标签的值得
+                    let data = $('#myModal form').serialize();
+                    //console.log(data);//id=13&name=%E4%BB%8A%E6%97%A5%E7%BB%BC%E8%89%BA&slug=%E5%B0%AC%E7%AC%91111
+                   // return
+                    
                     // 2.发送ajax请求完成编辑修改操作
                     $.ajax({
                         type: 'post',
                         url: BigNew.category_edit,
-                        data: {
-                            name: category_name,
-                            slug: category_slug,
-                            id: category_id
-                        },
+                        // data: {
+                        //     name: category_name,
+                        //     slug: category_slug,
+                        //     id: category_id
+                        // },
+                        data:data,
                         success: function (backData) {
-                            console.log(backData);
+                            // console.log(backData);
                             if (backData.code == 200) {
                                 alert('修改成功')
                                 // 3.编辑成功后重新加载数据
