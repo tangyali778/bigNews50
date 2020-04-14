@@ -14,6 +14,12 @@
     <script src="./libs/jquery-1.12.4.min.js"></script>
     <!-- 模板引擎 -->
     <script src="./libs/template-web.js"></script>
+    <!-- 日期jeDate插件引入文件 -->
+    <link rel="stylesheet" href="./libs/jedate/css/jeDate-test.css">
+    <link rel="stylesheet" href="./libs/jedate/css/jedate.css">
+    <script src="./libs/jedate/js/jedate.js"></script>
+    <!-- 富文本编辑器wangEditor插件引入文件 -->
+    <script src="./libs/wangEditor.min.js"></script>
 </head>
 
 <body>
@@ -25,14 +31,16 @@
             <form class="form-horizontal article_form" id="form">
                 <div class="form-group">
                     <label for="inputTitle" class="col-sm-2 control-label">文章标题：</label>
-                    <div class="col-sm-10">
+                    <div class="col-sm-8">
                         <input type="text" name="title" class="form-control title" id="inputTitle" value="文章标题文字">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="inputCover" class="col-sm-2 control-label">文章封面：</label>
                     <div class="col-sm-10">
+                        <!-- 预览用的图片 -->
                         <img src="images/pic06.jpg" class="article_cover">
+                        <!-- 预览用的input -->
                         <input name="cover" type="file" id="inputCover">
                     </div>
                 </div>
@@ -50,12 +58,23 @@
                 </div>
                 <div class="form-group">
                     <label class="col-sm-2 control-label">发布时间：</label>
+                    <!-- 日期插件的html结构 -->
                     <div class="col-sm-4">
+                        <div class="jeinpbox">
+                            <input type="text" class="jeinput" id="testico" name="date" placeholder="YYYY-MM-DD">
+                            <div class="icons jebtns"
+                                onclick="jeDate('#testico',{trigger:false,format: 'YYYY-MM-DD', zIndex: 20999})">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="inputEmail3" class="col-sm-2 control-label">文章内容：</label>
-                    <div class="col-sm-10">
+                    <!-- 富文本编辑器wangEditor插件的html结构 -->
+                    <div class="col-sm-8">
+                        <div id="editor">
+                            <p>请输入你要发表的文本内容</p>
+                        </div>
                     </div>
                 </div>
                 <div class="form-group">
@@ -67,6 +86,121 @@
             </form>
         </div>
     </div>
+    <script src="./libs/http.js"></script>
+    <!-- 准备一个下拉菜单下里面文章类别模板 -->
+    <script id="article_category_temp" type="text/html">
+       {{each data v}}
+        <option value={{v.id}} >{{v.name}}</option>
+        {{/each}}
+    </script>
+    <script>
+        //入口函数
+        $(function () {
+            //一. 选中文件时预览文章封面
+            $('#inputCover').on('change', function () {
+                let file1 = this.files[0];
+                let url = URL.createObjectURL(file1)
+                $('.article_cover').attr('src', url)
+            })
+
+            //二. 一进到发表文章列表,那个下拉菜单就把数据库有的文章类别显示出来
+            $.ajax({
+                type: 'get',
+                url: BigNew.category_list,
+                success: function (backData) {
+                    // console.log(backData);
+                    //2. 返回成功,利用模板引擎显示在下拉菜单中
+                    if (backData.code == 200) {
+                        let resHtml = template('article_category_temp', backData)
+                        $('select.category').html(resHtml)
+                    }
+                }
+            })
+            // 三.日期jeDate插件
+            // html结构中已经有了点击那个小图片出现日期选择弹出层,这里是写点击input有日期弹出层出现
+            jeDate("#testico", {
+                format: "YYYY-MM-DD",//日期格式
+                isinitVal: true,//否初始化时间
+                isTime: false,//是否开启时间选择
+                zIndex: 20999,//弹出层的层级高度
+                minDate: "2020-04-01 00:00:00",//最小日期  
+            })
+
+            // 四.富文本编辑器wangEditor插件
+            var E = window.wangEditor
+            var editor = new E('#editor')
+            // 或者 var editor = new E( document.getElementById('editor') )
+            editor.create();
+
+            // 五.发布文章
+            // 1.发布文章为已发布
+            // 封装函数
+            function release(selector, state) {
+                selector.on('click', function (e) {
+                    e.preventDefault();//阻止默认提交
+                    //创建FormData对象
+                    let fd = new FormData(document.querySelector('form'));
+                    // 检查form中name属性的值与发送ajax请求的参数的值是不是一样
+                    // 还缺content与state的值
+
+                    // 在FormData对象中追加内容(富文本编辑器wangEditor获取到的正文以及发布的状态)
+                    fd.append('content', editor.txt.html())
+                    fd.append('state', state);
+
+                    // 发送ajax请求-完成文章发布,将新增的文章相关信息添加到数据库,
+                    $.ajax({
+                        type: 'post',
+                        url: BigNew.article_publish,
+                        data: fd,
+                        // 只要是formdata传数据就不要下面两个条件
+                        contentType: false,//不要设置请求头
+                        processData: false,//不要把fd传输的数据格式变为key=value
+                        success: function (backData) {
+                            //发表成功
+                            if (backData.code == 200) {
+                                alert('发布成功')
+                                parent.$('ul.level02>li:eq(0)').trigger('click')
+                                location = 'article_list.html'
+                            }
+                        }
+                    })
+                })
+            }
+            release($('.btn-release'), '已发布')
+
+            // 2.发布文章为草稿
+            release($('.btn-draft'), '')
+            // $('.btn-draft').on('click', function (e) {
+            //     e.preventDefault();//阻止默认提交
+            //     //创建FormData对象
+            //     let fd = new FormData(document.querySelector('form'));
+            //     // 检查form中name属性的值与发送ajax请求的参数的值是不是一样
+            //     // 还缺content与state的值
+
+            //     // 在FormData对象中追加内容(富文本编辑器wangEditor获取到的正文以及发布的状态)
+            //     fd.append('content', editor.txt.html())
+
+            //     // 发送ajax请求-完成文章发布,将新增的文章相关信息添加到数据库,
+            //     $.ajax({
+            //         type: 'post',
+            //         url: BigNew.article_publish,
+            //         data: fd,
+            //         // 只要是formdata传数据就不要下面两个条件
+            //         contentType: false,//不要设置请求头
+            //         processData: false,//不要把fd传输的数据格式变为key=value
+            //         success: function (backData) {
+            //             //发表成功
+            //             if (backData.code == 200) {
+            //                 alert('保存草稿成功')
+            //                 parent.$('ul.level02>li:eq(0)').click()
+            //                 location = 'article_list.html'
+            //             }
+            //         }
+            //     })
+            // })
+
+        })
+    </script>
 </body>
 
 </html>
