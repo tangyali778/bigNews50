@@ -408,6 +408,19 @@
                 }
             })
 
+            // 七.文章搜索
+            $('.search_btn').on('click',function(){
+                //拿到用户输入的关键词
+                let searchTxt = $('.search_txt').val().trim();
+                // 非空判断
+                if (!searchTxt) {
+                    alert('搜索内容的不能为空哦');
+                    return;
+                }
+                // 点击之后跳到list文章列表页,把搜索的关键词带过去
+                location = `./list.html?search=${searchTxt}`
+            })
+
         })
     </script>
 </body>
