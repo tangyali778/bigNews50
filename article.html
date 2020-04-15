@@ -207,8 +207,133 @@
 
     <!-- 引入模板引擎js文件 -->
     <script src="./js/template-web.js"></script>
-    <script src="./js/jquery-1.12.4.min.js"></script>
 
+    <!-- 准备文章info信息的模板 -->
+    <script src="./js/jquery-1.12.4.min.js"></script>
+    <script id="articleInfo_temp" type="text/html">
+        <div class="article_info">
+            {{data.author}} 发布于 {{data.date}} &nbsp;&nbsp;&nbsp;分类: {{data.category}}&nbsp;&nbsp;&nbsp;阅读:
+            ({{data.read}})&nbsp;&nbsp;&nbsp;评论: ({{data.comments}})
+        </div>
+    </script>
+
+    <!-- 准备文章评论列表的模板 -->
+    <script id="commnet_temp" type="text/html">
+        {{each data v}}
+        <div class="comment_detail_list">
+            <div class="person_pic fl">{{v.author.substring(0,1)}}</div>
+            <div class="name_time fl"><b>{{v.author}}</b><span>{{v.date}} {{v.time}}</span></div>
+            <div class="comment_text fl">
+                {{v.content}}
+            </div>
+        </div>
+        {{/each}}
+    </script>
+    <script>
+        // 入口函数
+        $(function () {
+            //一: 一进来这个文章详情页,就应该获取传递过来的文章id 
+            let articleId = location.search.split('=')[1];
+            //判断是如何进来article.html文章详情页的
+            if (articleId == undefined) {
+                // 如果是网址直接输入的话,则直接去首页去
+                location = './index.html'
+            } else {
+                // 如果是点击首页或者列表页的链接进来的
+                //发送ajax请求,根据文章id获取 到该id的文章的详细信息
+                $.ajax({
+                    type: 'get',
+                    url: 'http://localhost:8080/api/v1/index/article',
+                    data: `id=${articleId}`,
+                    success: function (backData) {
+                        //console.log(backData);
+                        if (backData.code == 200) {
+
+                            // 把对应的信息显示在对应的标签上
+                            $('.breadcrumb').find('a').eq(1).text(backData.data.category); //文章类别
+                            $('.article_title').text(backData.data.title); //文章标题
+                            $('.article_con').html(backData.data.content); //文章内容
+
+                            // 利用模板引擎把info的内容显示在页面
+                            let resHtml = template('articleInfo_temp', backData);
+                            $('.article_info').html(resHtml);
+
+                            // 上一篇
+                            if (backData.data.prev == null) {
+                                $('.article_links').find('a').eq(0).text('没有上一篇')
+                            } else {
+                                $('.article_links').find('a').eq(0).text(backData.data.prev.title)
+                                $('.article_links').find('a').eq(0).attr('href',
+                                    `./article.html?id=${backData.data.prev.id}`)
+                            }
+
+                            //下一篇
+                            if (backData.data.next == null) {
+                                $('.article_links').find('a').eq(1).text('没有下一篇')
+                            } else {
+                                $('.article_links').find('a').eq(1).text(backData.data.next.title)
+                                $('.article_links').find('a').eq(1).attr('href',
+                                    `./article.html?id=${backData.data.next.id}`)
+                            }
+
+                        }
+
+                    }
+                })
+            }
+
+             // 二.展示该文章下面的所有评论
+            $.ajax({
+                type: 'get',
+                url: 'http://localhost:8080/api/v1/index/get_comment',
+                data: `articleId=${articleId}`,
+                success: function (backData) {
+                    //console.log(backData);
+                    //统计评论数量
+                    $('.comment_count').text(backData.data.length + '条评论');
+                    //通过模板引擎渲染评论列表
+                    let resHtml = template('commnet_temp', backData);
+                    $('.comment_list_con').html(resHtml);
+
+                }
+            });
+
+           
+            //三: 发表评论
+            //给评论按钮设置一个点击事件. 
+            $('.comment_sub').on('click',function(e){
+                e.preventDefault();//取消默认的提交行为
+                //获取用户输入的名字和评论内容
+                var comment_name = $('.comment_name').val().trim(); //用户名
+                var comment_input = $('.comment_input').val().trim();//评论内容
+                //非空判断
+                if(!comment_name|| !comment_input){
+                    alert('用户名跟评论内容不能为空!');
+                    return;
+                }
+                //发送ajax请求,发送评论的数据给数据库完成评论
+                $.ajax({
+                    type:'post',
+                    url:'http://localhost:8080/api/v1/index/post_comment',
+                    data:{
+                        author:comment_name,
+                        content:comment_input,
+                        articleId:articleId
+                    },
+                    success:function(backData){
+                        if(backData.code == 201){
+                            alert('发表评论成功,等待管理员审核!');
+                            //输入框清空
+                            $('.comment_name').val("");
+                            $('.comment_input').val("");
+                        }
+                    }
+                });
+            })
+
+            
+        })
+    </script>
 </body>
 
 </html>
