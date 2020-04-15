@@ -135,7 +135,7 @@
                 </div>
             </div>
 
-            <div id="pagination" class="page"></div>
+             <!-- <div id="pagination" class="page"></div>
             <script>
                 $(function () {
                     $("#pagination").pagination({
@@ -146,7 +146,7 @@
                         }
                     });
                 });
-            </script>
+            </script> -->
 
         </div>
         <div class="right_con setfl">
@@ -227,6 +227,107 @@
     </div>
     <!-- 导包template -->
     <script src="./js/template-web.js"></script>
+
+    <!-- 准备一个文章列表的数据的模板 -->
+    <script id="common_temp" type="text/html">
+        {{each data.data v}}
+        <div class="common_news_list">
+            <a href="./article.html?id={{v.id}}" class="list_pic"><img src="{{v.cover}}" alt=""></a>
+            <h4><a href="./article.html?id={{v.id}}">{{v.title}}</a></h4>
+            <p>{{@ v.intro}} </p>
+            <div class="new_info">
+                <span>标签：{{v.category}}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;<i class="fa fa-eye"></i>&nbsp;阅读(
+                    {{v.read}}
+                    )&nbsp;&nbsp;&nbsp;<i class="fa fa-commenting"></i>&nbsp;评论( {{v.comments}} )</span>
+                <b>发布于 {{v.date}} {{v.time}}</b>
+            </div>
+        </div>
+        {{/each}}
+    </script>
+    <script>
+        //入口函数
+        $(function () {
+            // 先判断是怎么进入到列表list页面的
+            // 有三种情况:
+            //1.直接网址栏搜list.html进来,这种直接返回首页
+            //2. 点击那个导航栏的文章类别进来的,发送ajax请求,根据文章类别的id获取该类别相应的一些文章
+            //3.搜关键词点击搜索按钮进来的,发送ajax请求,根据首页搜索关键词获取与之对应的一些文章
+
+
+            // (可以获取到url中?和?后面的内容)
+            let value = location.search; //?search=%E5%8D%8E%E4%B8%BA  或者 ?icategoryId=1 
+            let value1 = location.search.split('=')[0]; //?search 或者 ?icategoryId
+            let value2 = location.search.split('=')[1]; //%E5%8D%8E%E4%B8%BA 或者1
+
+            if (value == '') {
+                // 如果是输入网址为list.html网页后面没有?啥的,直接进来的,那就打回到首页
+                location = './index.html';
+            } else if (value1 == '?icategoryId') {
+                //如果是点击那个导航栏的文章类别进来的
+                // 发送ajax请求,根据文章类别的id获取该类别相应的一些文章
+                $.ajax({
+                    type: 'get',
+                    url: 'http://localhost:8080/api/v1/index/search',
+                    data: {
+                        type: value2, //文章类型id,为空返回所有类型文章
+                        // page:1,当前页为空返回第一页
+                        // perpage:6,每条显示条数,为空默认每页6条
+                    },
+                    success: function (backData) {
+                        //console.log(backData);
+                        if (backData.code == 200) {
+                            // 判断返回的有没有数据
+                            if (backData.data.data.length > 0) {
+                                // 表示这个分类有数据, 通过模板引擎把文章列表的数据显示出来
+                                let resHtml = template('common_temp', backData)
+                                $('div.left_con').html(
+                                    `<div class="list_title"><h3>${backData.data.data[0].category}</h3></div>${resHtml}`
+                                )
+                            } else {
+                                $('div.left_con').html(
+                                    `<div class="list_title"><h3>没有数据</h3></div>`)
+                            }
+
+                        }
+
+                    }
+                })
+            } else {
+                //如果是搜关键词点击搜索按钮进来的
+                value2 = decodeURI(value2); //把%E5%8D%8E%E4%B8%BA 给解码为汉字
+                // 发送ajax请求,根据首页搜索关键词获取与之对应的一些文章
+                $.ajax({
+                    type: 'get',
+                    url: 'http://localhost:8080/api/v1/index/search',
+                    data: {
+                        key: value2, //搜索关键词,为空返回所有类型文章
+                        // page:1,当前页为空返回第一页
+                        // perpage:6,每条显示条数,为空默认每页6条
+                    },
+                    success: function (backData) {
+                        console.log(backData);
+                        if (backData.code == 200) {
+                            // 判断返回的有没有数据
+                            if (backData.data.data.length > 0) {
+                                // 表示这个分类有数据,通过模板引擎把文章列表的数据渲染出来
+                                let resHtml = template('common_temp', backData)
+                                $('div.left_con').html(
+                                    `<div class="list_title"><h3>搜索词:${value2}</h3></div>${resHtml}`
+                                )
+                            } else {
+                                $('div.left_con').html(
+                                    `<div class="list_title"><h3>没有数据</h3></div>`)
+                            }
+
+                        }
+
+                    }
+                })
+            }
+
+
+        })
+    </script>
 </body>
 
 </html>

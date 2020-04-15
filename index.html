@@ -419,6 +419,8 @@
                 }
                 // 点击之后跳到list文章列表页,把搜索的关键词带过去
                 location = `./list.html?search=${searchTxt}`
+                //输入完跳转之后首页搜索框清空输入的内容
+                $('.search_txt').val('')
             })
 
         })
